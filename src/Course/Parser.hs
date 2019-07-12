@@ -123,6 +123,8 @@ character = P (\input -> case input of
   Nil -> UnexpectedEof
   a :. b -> Result b a)
 
+-- P takes a parser function, return ParserResult on different inputs
+
 -- | Parsers can map.
 -- Write a Functor instance for a @Parser@.
 --
@@ -135,6 +137,8 @@ instance Functor Parser where
     -> Parser b
   (<$>) = \f -> \(P p) -> P (\input -> (<$>) f (p input))
 
+  -- maps function to a parsed result. P input is just a functor that you can map a function on.
+
 -- | Return a parser that always succeeds with the given value and consumes no input.
 --
 -- >>> parse (valueParser 3) "abc"
@@ -143,6 +147,8 @@ valueParser ::
   a
   -> Parser a
 valueParser = \a -> P (\input -> Result input a)
+
+--Self explanatory
 
 -- | Return a parser that tries the first parser for a successful value.
 --
@@ -169,6 +175,8 @@ valueParser = \a -> P (\input -> Result input a)
     Result _ _ -> psr1rs
     _ -> parse psr2 input
   )
+
+  -- Use P () constructor when a parser is needed, parse a b parses a parser using a given input.
   
 
 infixl 3 |||
@@ -204,6 +212,8 @@ instance Monad Parser where
     Result a b -> parse (func b) a
     _ -> UnexpectedEof)
 
+  -- func b returns a parser
+
 
 
 -- | Write an Applicative functor instance for a @Parser@.
@@ -222,6 +232,8 @@ instance Applicative Parser where
     f >>= \ff ->
     a >>= \aa ->
       pure (ff aa)
+
+-- Don't get this
 
 -- | Return a parser that produces a character but fails if
 --
@@ -242,6 +254,8 @@ satisfy ::
 satisfy pr = character >>= \c -> case pr c of
   True -> pure c
   False -> unexpectedCharParser c
+
+-- pr returns a bool so use the result for case, pure c returns a parseresult
 
 -- | Return a parser that produces the given character but fails if
 --
@@ -302,6 +316,8 @@ list ::
   Parser a
   -> Parser (List a)
 list p = list1 p ||| pure Nil
+
+--list1 is built in
 
 -- | Return a parser that produces at least one value from the given parser then
 -- continues producing a list of values from the given parser (to ultimately produce a non-empty list).
@@ -385,7 +401,12 @@ sequenceParser ::
   List (Parser a)
   -> Parser (List a)
 sequenceParser =
-  error "todo: Course.Parser#sequenceParser"
+  \listp ->
+    case listp of
+      Nil -> pure Nil
+      p :. ps -> lift2 (:.) p (sequenceParser ps)
+
+      --Basically just binds all the parsers together and return a binded parser using lift2.
 
 -- | Return a parser that produces the given number of values off the given parser.
 -- This parser fails if the given parser fails in the attempt to produce the given number of values.
@@ -401,8 +422,7 @@ thisMany ::
   Int
   -> Parser a
   -> Parser (List a)
-thisMany =
-  error "todo: Course.Parser#thisMany"
+thisMany = \n p -> sequenceParser (replicate n p)
 
 -- | This one is done for you.
 --
