@@ -73,9 +73,8 @@ instance Monad ((->) t) where
     (a -> ((->) t b))
     -> ((->) t a)
     -> ((->) t b)
-  (=<<) =
-    error "todo: Course.Monad (=<<)#instance ((->) t)"
-
+  (=<<) = error "asdf"
+  
 -- | Witness that all things with (=<<) and (<$>) also have (<*>).
 --
 -- >>> ExactlyOne (+10) <**> ExactlyOne 8
@@ -135,7 +134,7 @@ join ::
   f (f a)
   -> f a
 join =
-  error "todo: Course.Monad#join"
+  (=<<) id
 
 -- | Implement a flipped version of @(=<<)@, however, use only
 -- @join@ and @(<$>)@.
@@ -148,8 +147,9 @@ join =
   f a
   -> (a -> f b)
   -> f b
-(>>=) =
-  error "todo: Course.Monad#(>>=)"
+a >>= f =
+  join (f <$> a)
+  
 
 infixl 1 >>=
 
