@@ -438,9 +438,9 @@ thisMany = \n p -> sequenceParser (replicate n p)
 -- True
 ageParser ::
   Parser Int
-ageParser =
+ageParser = list1 digit >>=
   (\k -> case read k of Empty  -> constantParser (UnexpectedString k)
-                        Full h -> pure h) =<< (list1 digit)
+                        Full h -> pure h)
 
 -- | Write a parser for Person.firstName.
 -- /First Name: non-empty string that starts with a capital letter and is followed by zero or more lower-case letters/
@@ -454,8 +454,9 @@ ageParser =
 -- True
 firstNameParser ::
   Parser Chars
-firstNameParser =
-  error "todo: Course.Parser#firstNameParser"
+firstNameParser = upper >>= \x ->
+  list(lower) >>= \y ->
+  pure(x:.y)
 
 -- | Write a parser for Person.surname.
 --
@@ -476,9 +477,10 @@ firstNameParser =
 -- True
 surnameParser ::
   Parser Chars
-surnameParser =
-  error "todo: Course.Parser#surnameParser"
-
+surnameParser = upper >>= \x ->
+  thisMany 5 lower >>= \y ->
+  list lower >>= \z ->
+  pure(x:.y++z)
 -- | Write a parser for Person.smoker.
 --
 -- /Smoker: character that must be @'y'@ or @'n'@/
@@ -495,8 +497,9 @@ surnameParser =
 -- True
 smokerParser ::
   Parser Bool
-smokerParser =
-  error "todo: Course.Parser#smokerParser"
+smokerParser = True <$ is 'y' ||| False <$ is 'n'
+    
+
 
 -- | Write part of a parser for Person#phoneBody.
 -- This parser will only produce a string of digits, dots or hyphens.
@@ -517,8 +520,7 @@ smokerParser =
 -- Result >a123-456< ""
 phoneBodyParser ::
   Parser Chars
-phoneBodyParser =
-  error "todo: Course.Parser#phoneBodyParser"
+phoneBodyParser = list (digit ||| is '.' ||| is '-')
 
 -- | Write a parser for Person.phone.
 --
@@ -539,8 +541,12 @@ phoneBodyParser =
 -- True
 phoneParser ::
   Parser Chars
-phoneParser =
-  error "todo: Course.Parser#phoneParser"
+phoneParser = digit >>= \x ->
+  phoneBodyParser >>= \y ->
+  is '#' >>= \_ ->
+  pure (x:.y)
+
+-- This shit makes sense
 
 -- | Write a parser for Person.
 --
@@ -598,7 +604,16 @@ phoneParser =
 personParser ::
   Parser Person
 personParser =
-  error "todo: Course.Parser#personParser"
+    ageParser >>= \a ->
+    spaces1 *>
+    firstNameParser >>= \f ->
+    spaces1 *>
+    surnameParser >>= \s ->
+    spaces1 *>
+    smokerParser >>= \g ->
+    spaces1 *>
+    phoneParser >>= \p ->
+    valueParser (Person a f s g p)
 
 -- Make sure all the tests pass!
 
